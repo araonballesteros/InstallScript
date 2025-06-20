@@ -1,18 +1,17 @@
 #!/bin/bash
 ################################################################################
-# Script for installing Odoo on Ubuntu 16.04, 18.04, 20.04 and 22.04 (could be used for other version too)
-# Author: Yenthe Van Ginneken
+# Script para instalar Odoo en Ubuntu 16.04, 18.04, 20.04 y 22.04 (puede usarse en otras versiones)
+# Autor: SofBiz Technologies
 #-------------------------------------------------------------------------------
-# This script will install Odoo on your Ubuntu server. It can install multiple Odoo instances
-# in one Ubuntu because of the different xmlrpc_ports
+# Este script instalará Odoo en su servidor Ubuntu y permite múltiples instancias mediante distintos puertos xmlrpc
 #-------------------------------------------------------------------------------
 # Make a new file:
+# Cree un nuevo archivo:
 # sudo nano odoo-install.sh
-# Place this content in it and then make the file executable:
+# Coloque este contenido y haga el archivo ejecutable:
 # sudo chmod +x odoo-install.sh
-# Execute the script to install Odoo:
+# Ejecute el script para instalar Odoo:
 # ./odoo-install
-################################################################################
 
 OE_USER="odoo"
 OE_HOME="/$OE_USER"
@@ -22,12 +21,12 @@ OE_HOME_EXT="/$OE_USER/${OE_USER}-server"
 INSTALL_WKHTMLTOPDF="True"
 # Set the default Odoo port (you still have to use -c /etc/odoo-server.conf for example to use this.)
 OE_PORT="8069"
-# Choose the Odoo version which you want to install. For example: 16.0, 15.0, 14.0 or saas-22. When using 'master' the master version will be installed.
-# IMPORTANT! This script contains extra libraries that are specifically needed for Odoo 16.0
-OE_VERSION="16.0"
+# Choose the Odoo version which you want to install. For example: 18.0, 17.0, 16.0 or saas-22. When using 'master' the master version will be installed.
+# IMPORTANT! This script contains extra libraries that are specifically needed for Odoo 18.0
+OE_VERSION="18.0"
 # Set this to True if you want to install the Odoo enterprise version!
 IS_ENTERPRISE="False"
-# Installs postgreSQL V14 instead of defaults (e.g V12 for Ubuntu 20/22) - this improves performance
+# Instala PostgreSQL V14 instead of defaults (e.g V12 for Ubuntu 20/22) - this improves performance
 INSTALL_POSTGRESQL_FOURTEEN="True"
 # Set this to True if you want to install Nginx!
 INSTALL_NGINX="False"
@@ -49,7 +48,7 @@ ADMIN_EMAIL="odoo@example.com"
 ## === Ubuntu Trusty x64 & x32 === (for other distributions please replace these two links,
 ## in order to have correct version of wkhtmltopdf installed, for a danger note refer to
 ## https://github.com/odoo/odoo/wiki/Wkhtmltopdf ):
-## https://www.odoo.com/documentation/16.0/administration/install.html
+## https://www.odoo.com/documentation/18.0/administration/install.html
 
 # Check if the operating system is Ubuntu 22.04
 if [[ $(lsb_release -r -s) == "22.04" ]]; then
@@ -65,7 +64,7 @@ fi
 #--------------------------------------------------
 # Update Server
 #--------------------------------------------------
-echo -e "\n---- Update Server ----"
+echo -e "\n---- Actualizar servidor ----"
 # universe package is for Ubuntu 18.x
 sudo add-apt-repository universe
 # libpng12-0 dependency for wkhtmltopdf for older Ubuntu versions
@@ -77,41 +76,41 @@ sudo apt-get install libpq-dev
 #--------------------------------------------------
 # Install PostgreSQL Server
 #--------------------------------------------------
-echo -e "\n---- Install PostgreSQL Server ----"
+echo -e "\n---- Instalar servidor PostgreSQL ----"
 if [ $INSTALL_POSTGRESQL_FOURTEEN = "True" ]; then
-    echo -e "\n---- Installing postgreSQL V14 due to the user it's choise ----"
+    echo -e "\n---- Installing posgreSQL V14 según la elección del usuario ----"
     sudo curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc|sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/postgresql.gpg
     sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
     sudo apt-get update
     sudo apt-get install postgresql-14
 else
-    echo -e "\n---- Installing the default postgreSQL version based on Linux version ----"
+    echo -e "\n---- Instalando la versión predeterminada de PostgreSQL según la distribución ----"
     sudo apt-get install postgresql postgresql-server-dev-all -y
 fi
 
 
-echo -e "\n---- Creating the ODOO PostgreSQL User  ----"
+echo -e "\n---- Creando el usuario PostgreSQL de ODOO  ----"
 sudo su - postgres -c "createuser -s $OE_USER" 2> /dev/null || true
 
 #--------------------------------------------------
 # Install Dependencies
 #--------------------------------------------------
-echo -e "\n--- Installing Python 3 + pip3 --"
+echo -e "\n--- Instalando Python 3 y pip3 --"
 sudo apt-get install python3 python3-pip
 sudo apt-get install git python3-cffi build-essential wget python3-dev python3-venv python3-wheel libxslt-dev libzip-dev libldap2-dev libsasl2-dev python3-setuptools node-less libpng-dev libjpeg-dev gdebi -y
 
-echo -e "\n---- Install python packages/requirements ----"
+echo -e "\n---- Instalar paquetes y dependencias de Python ----"
 sudo -H pip3 install -r https://github.com/odoo/odoo/raw/${OE_VERSION}/requirements.txt
 
-echo -e "\n---- Installing nodeJS NPM and rtlcss for LTR support ----"
+echo -e "\n---- Instalando NodeJS NPM y rtlcss para soporte LTR ----"
 sudo apt-get install nodejs npm -y
 sudo npm install -g rtlcss
 
 #--------------------------------------------------
-# Install Wkhtmltopdf if needed
+# Instalar Wkhtmltopdf si es necesario
 #--------------------------------------------------
 if [ $INSTALL_WKHTMLTOPDF = "True" ]; then
-  echo -e "\n---- Install wkhtml and place shortcuts on correct place for ODOO 13 ----"
+  echo -e "\n---- Instalar wkhtml y ubicar accesos directos para ODOO 18 ----"
   #pick up correct one from x64 & x32 versions:
   if [ "`getconf LONG_BIT`" == "64" ];then
       _url=$WKHTMLTOX_X64
@@ -132,20 +131,20 @@ if [ $INSTALL_WKHTMLTOPDF = "True" ]; then
   sudo ln -s /usr/local/bin/wkhtmltopdf /usr/bin
   sudo ln -s /usr/local/bin/wkhtmltoimage /usr/bin
 else
-  echo "Wkhtmltopdf isn't installed due to the choice of the user!"
+  echo "Wkhtmltopdf no se instaló por elección del usuario!"
 fi
 
-echo -e "\n---- Create ODOO system user ----"
+echo -e "\n---- Crear usuario del sistema ODOO ----"
 sudo adduser --system --quiet --shell=/bin/bash --home=$OE_HOME --gecos 'ODOO' --group $OE_USER
 #The user should also be added to the sudo'ers group.
 sudo adduser $OE_USER sudo
 
-echo -e "\n---- Create Log directory ----"
+echo -e "\n---- Crear directorio de logs ----"
 sudo mkdir /var/log/$OE_USER
 sudo chown $OE_USER:$OE_USER /var/log/$OE_USER
 
 #--------------------------------------------------
-# Install ODOO
+# Instalar ODOO
 #--------------------------------------------------
 echo -e "\n==== Installing ODOO Server ===="
 sudo git clone --depth 1 --branch $OE_VERSION https://www.github.com/odoo/odoo $OE_HOME_EXT/
@@ -153,7 +152,7 @@ sudo git clone --depth 1 --branch $OE_VERSION https://www.github.com/odoo/odoo $
 if [ $IS_ENTERPRISE = "True" ]; then
     # Odoo Enterprise install!
     sudo pip3 install psycopg2-binary pdfminer.six
-    echo -e "\n--- Create symlink for node"
+    echo -e "\n--- Crear enlace simbólico para node"
     sudo ln -s /usr/bin/nodejs /usr/bin/node
     sudo su $OE_USER -c "mkdir $OE_HOME/enterprise"
     sudo su $OE_USER -c "mkdir $OE_HOME/enterprise/addons"
@@ -169,28 +168,28 @@ if [ $IS_ENTERPRISE = "True" ]; then
         GITHUB_RESPONSE=$(sudo git clone --depth 1 --branch $OE_VERSION https://www.github.com/odoo/enterprise "$OE_HOME/enterprise/addons" 2>&1)
     done
 
-    echo -e "\n---- Added Enterprise code under $OE_HOME/enterprise/addons ----"
-    echo -e "\n---- Installing Enterprise specific libraries ----"
+    echo -e "\n---- Código Enterprise añadido en $OE_HOME/enterprise/addons ----"
+    echo -e "\n---- Instalando librerías específicas de Enterprise ----"
     sudo -H pip3 install num2words ofxparse dbfread ebaysdk firebase_admin pyOpenSSL
     sudo npm install -g less
     sudo npm install -g less-plugin-clean-css
 fi
 
-echo -e "\n---- Create custom module directory ----"
+echo -e "\n---- Crear directorio de módulos personalizados ----"
 sudo su $OE_USER -c "mkdir $OE_HOME/custom"
 sudo su $OE_USER -c "mkdir $OE_HOME/custom/addons"
 
-echo -e "\n---- Setting permissions on home folder ----"
+echo -e "\n---- Estableciendo permisos en la carpeta home ----"
 sudo chown -R $OE_USER:$OE_USER $OE_HOME/*
 
-echo -e "* Create server config file"
+echo -e "* Crear archivo de configuración del servidor"
 
 
 sudo touch /etc/${OE_CONFIG}.conf
 echo -e "* Creating server config file"
 sudo su root -c "printf '[options] \n; This is the password that allows database operations:\n' >> /etc/${OE_CONFIG}.conf"
 if [ $GENERATE_RANDOM_PASSWORD = "True" ]; then
-    echo -e "* Generating random admin password"
+    echo -e "* Generando contrasena de administrador aleatoria"
     OE_SUPERADMIN=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
 fi
 sudo su root -c "printf 'admin_passwd = ${OE_SUPERADMIN}\n' >> /etc/${OE_CONFIG}.conf"
@@ -209,7 +208,7 @@ fi
 sudo chown $OE_USER:$OE_USER /etc/${OE_CONFIG}.conf
 sudo chmod 640 /etc/${OE_CONFIG}.conf
 
-echo -e "* Create startup file"
+echo -e "* Crear archivo de inicio"
 sudo su root -c "echo '#!/bin/sh' >> $OE_HOME_EXT/start.sh"
 sudo su root -c "echo 'sudo -u $OE_USER $OE_HOME_EXT/odoo-bin --config=/etc/${OE_CONFIG}.conf' >> $OE_HOME_EXT/start.sh"
 sudo chmod 755 $OE_HOME_EXT/start.sh
@@ -218,7 +217,7 @@ sudo chmod 755 $OE_HOME_EXT/start.sh
 # Adding ODOO as a deamon (initscript)
 #--------------------------------------------------
 
-echo -e "* Create init file"
+echo -e "* Crear archivo init"
 cat <<EOF > ~/$OE_CONFIG
 #!/bin/sh
 ### BEGIN INIT INFO
@@ -285,19 +284,19 @@ esac
 exit 0
 EOF
 
-echo -e "* Security Init File"
+echo -e "* Archivo init de seguridad"
 sudo mv ~/$OE_CONFIG /etc/init.d/$OE_CONFIG
 sudo chmod 755 /etc/init.d/$OE_CONFIG
 sudo chown root: /etc/init.d/$OE_CONFIG
 
-echo -e "* Start ODOO on Startup"
+echo -e "* Iniciar ODOO al arrancar"
 sudo update-rc.d $OE_CONFIG defaults
 
 #--------------------------------------------------
-# Install Nginx if needed
+# Instalar Nginx si es necesario
 #--------------------------------------------------
 if [ $INSTALL_NGINX = "True" ]; then
-  echo -e "\n---- Installing and setting up Nginx ----"
+  echo -e "\n---- Instalando y configurando Nginx ----"
   sudo apt install nginx -y
   cat <<EOF > ~/odoo
 server {
@@ -379,13 +378,13 @@ EOF
   sudo rm /etc/nginx/sites-enabled/default
   sudo service nginx reload
   sudo su root -c "printf 'proxy_mode = True\n' >> /etc/${OE_CONFIG}.conf"
-  echo "Done! The Nginx server is up and running. Configuration can be found at /etc/nginx/sites-available/$WEBSITE_NAME"
+  echo "¡Hecho! El servidor Nginx está en ejecución. La configuración se encuentra en /etc/nginx/sites-available/$WEBSITE_NAME"
 else
-  echo "Nginx isn't installed due to choice of the user!"
+  echo "Nginx no se instaló por elección del usuario!"
 fi
 
 #--------------------------------------------------
-# Enable ssl with certbot
+# Habilitar SSL con certbot
 #--------------------------------------------------
 
 if [ $INSTALL_NGINX = "True" ] && [ $ENABLE_SSL = "True" ] && [ $ADMIN_EMAIL != "odoo@example.com" ]  && [ $WEBSITE_NAME != "_" ];then
@@ -396,33 +395,33 @@ if [ $INSTALL_NGINX = "True" ] && [ $ENABLE_SSL = "True" ] && [ $ADMIN_EMAIL != 
   sudo apt-get install python3-certbot-nginx -y
   sudo certbot --nginx -d $WEBSITE_NAME --noninteractive --agree-tos --email $ADMIN_EMAIL --redirect
   sudo service nginx reload
-  echo "SSL/HTTPS is enabled!"
+  echo "¡SSL/HTTPS habilitado!"
 else
-  echo "SSL/HTTPS isn't enabled due to choice of the user or because of a misconfiguration!"
+  echo "SSL/HTTPS no se habilitó por elección del usuario o por una mala configuración!"
   if $ADMIN_EMAIL = "odoo@example.com";then 
-    echo "Certbot does not support registering odoo@example.com. You should use real e-mail address."
+    echo "Certbot no permite registrar odoo@example.com. Debe usar un correo real."
   fi
   if $WEBSITE_NAME = "_";then
-    echo "Website name is set as _. Cannot obtain SSL Certificate for _. You should use real website address."
+    echo "El nombre del sitio es _. No se puede obtener un certificado SSL para _. Use una dirección real."
   fi
 fi
 
-echo -e "* Starting Odoo Service"
+echo -e "* Iniciando el servicio Odoo"
 sudo su root -c "/etc/init.d/$OE_CONFIG start"
 echo "-----------------------------------------------------------"
-echo "Done! The Odoo server is up and running. Specifications:"
-echo "Port: $OE_PORT"
-echo "User service: $OE_USER"
-echo "Configuraton file location: /etc/${OE_CONFIG}.conf"
-echo "Logfile location: /var/log/$OE_USER"
-echo "User PostgreSQL: $OE_USER"
-echo "Code location: $OE_USER"
-echo "Addons folder: $OE_USER/$OE_CONFIG/addons/"
-echo "Password superadmin (database): $OE_SUPERADMIN"
-echo "Start Odoo service: sudo service $OE_CONFIG start"
-echo "Stop Odoo service: sudo service $OE_CONFIG stop"
-echo "Restart Odoo service: sudo service $OE_CONFIG restart"
+echo "¡Hecho! El servidor Odoo está en marcha. Especificaciones:"
+echo "Puerto: $OE_PORT"
+echo "Usuario del servicio: $OE_USER"
+echo "Ubicacion del archivo de configuracion: /etc/${OE_CONFIG}.conf"
+echo "Ubicacion del log: /var/log/$OE_USER"
+echo "Usuario PostgreSQL: $OE_USER"
+echo "Ubicacion del codigo: $OE_USER"
+echo "Carpeta de addons: $OE_USER/$OE_CONFIG/addons/"
+echo "Contrasena del superadministrador (base de datos): $OE_SUPERADMIN"
+echo "Inicio del servicio Odoo: sudo service $OE_CONFIG start"
+echo "Detener servicio Odoo: sudo service $OE_CONFIG stop"
+echo "Reiniciar servicio Odoo: sudo service $OE_CONFIG restart"
 if [ $INSTALL_NGINX = "True" ]; then
-  echo "Nginx configuration file: /etc/nginx/sites-available/$WEBSITE_NAME"
+  echo "Archivo de configuracion de Nginx: /etc/nginx/sites-available/$WEBSITE_NAME"
 fi
 echo "-----------------------------------------------------------"

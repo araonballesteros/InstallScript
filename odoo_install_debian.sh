@@ -1,16 +1,15 @@
 #!/bin/bash
 ################################################################################
-# Script for installing Odoo on Debian 10.0 (could be used for other version too)
-# Authors: Yenthe Van Ginneken, César Cordero Rodríguez
-# Maintainers: Yenthe Van Ginneken, César Cordero Rodríguez
+# Script para instalar Odoo en Debian 10.0 (puede usarse en otras versiones)
+# Autor: SofBiz Technologies
 #-------------------------------------------------------------------------------
-# This script will install Odoo on your Debian 10.0 server. It can install multiple Odoo instances
-# in one Debian because of the different xmlrpc_ports
-#-------------------------------------------------------------------------------
-# Make a new file:
+# Este script instalará Odoo en su servidor Debian y permite varias instancias mediante distintos puertos xmlrpc
+# Cree un nuevo archivo:
 # sudo nano odoo-install.sh
-# Place this content in it and then make the file executable:
+# Coloque este contenido y haga el archivo ejecutable:
 # sudo chmod +x odoo-install.sh
+# Ejecute el script para instalar Odoo:
+# ./odoo-install
 # Execute the script to install Odoo:
 # ./odoo-install
 ################################################################################
@@ -23,9 +22,9 @@ OE_HOME_EXT="/$OE_USER/${OE_USER}-server"
 INSTALL_WKHTMLTOPDF="True"
 # Set the default Odoo port (you still have to use -c /etc/odoo-server.conf for example to use this.)
 OE_PORT="8069"
-# Choose the Odoo version which you want to install. For example: 13.0, 12.0, 11.0 or saas-18. When using 'master' the master version will be installed.
-# IMPORTANT! This script contains extra libraries that are specifically needed for Odoo 13.0
-OE_VERSION="14.0"
+# Choose the Odoo version which you want to install. For example: 18.0, 17.0, 16.0 or saas-18. When using 'master' the master version will be installed.
+# IMPORTANT! This script contains extra libraries that are specifically needed for Odoo 18.0
+OE_VERSION="18.0"
 # Set this to True if you want to install the Odoo enterprise version!
 IS_ENTERPRISE="False"
 # Set this to True if you want to install Nginx!
@@ -52,30 +51,30 @@ WKHTMLTOX_X32=https://github.com/wkhtmltopdf/wkhtmltopdf/releases/download/0.12.
 #--------------------------------------------------
 # Update Server
 #--------------------------------------------------
-echo -e "\n---- Update Server ----"
+echo -e "\n---- Actualizar servidor ----"
 sudo apt-get update
 sudo apt-get upgrade -y
 
 #--------------------------------------------------
 # Install PostgreSQL Server
 #--------------------------------------------------
-echo -e "\n---- Install PostgreSQL Server ----"
+echo -e "\n---- Instalar servidor PostgreSQL ----"
 sudo apt-get install postgresql -y
 
-echo -e "\n---- Creating the ODOO PostgreSQL User  ----"
+echo -e "\n---- Creando el usuario PostgreSQL de ODOO  ----"
 sudo su - postgres -c "createuser -s $OE_USER" 2> /dev/null || true
 
 #--------------------------------------------------
 # Install Dependencies
 #--------------------------------------------------
-echo -e "\n--- Installing Python 3 + pip3 --"
+echo -e "\n--- Instalando Python 3 y pip3 --"
 sudo apt-get install git python3 python3-pip build-essential wget python3-dev python3-venv python3-wheel libxslt1-dev -y
 sudo apt-get install libzip-dev libldap2-dev libsasl2-dev python3-setuptools node-less gdebi -y
 
-echo -e "\n---- Install python packages/requirements ----"
+echo -e "\n---- Instalar paquetes y dependencias de Python ----"
 sudo pip3 install -r https://github.com/odoo/odoo/raw/${OE_VERSION}/requirements.txt
 
-echo -e "\n---- Installing nodeJS NPM and rtlcss for LTR support ----"
+echo -e "\n---- Instalando NodeJS NPM y rtlcss para soporte LTR ----"
 sudo apt-get install nodejs npm -y
 sudo npm install -g rtlcss
 
@@ -83,7 +82,7 @@ sudo npm install -g rtlcss
 # Install Wkhtmltopdf if needed
 #--------------------------------------------------
 if [ $INSTALL_WKHTMLTOPDF = "True" ]; then
-  echo -e "\n---- Install wkhtml and place shortcuts on correct place for ODOO 13 ----"
+  echo -e "\n---- Instalar wkhtml y ubicar accesos directos para ODOO 18 ----"
   #pick up correct one from x64 & x32 versions:
   if [ "`getconf LONG_BIT`" == "64" ];then
       _url=$WKHTMLTOX_X64
@@ -98,12 +97,12 @@ else
   echo "Wkhtmltopdf isn't installed due to the choice of the user!"
 fi
 
-echo -e "\n---- Create ODOO system user ----"
+echo -e "\n---- Crear usuario del sistema ODOO ----"
 sudo adduser --system --quiet --shell=/bin/bash --home=$OE_HOME --gecos 'ODOO' --group $OE_USER
 #The user should also be added to the sudo'ers group.
 sudo adduser $OE_USER sudo
 
-echo -e "\n---- Create Log directory ----"
+echo -e "\n---- Crear directorio de logs ----"
 sudo mkdir /var/log/$OE_USER
 sudo chown $OE_USER:$OE_USER /var/log/$OE_USER
 
@@ -142,17 +141,17 @@ echo -e "\n---- Create custom module directory ----"
 sudo su $OE_USER -c "mkdir $OE_HOME/custom"
 sudo su $OE_USER -c "mkdir $OE_HOME/custom/addons"
 
-echo -e "\n---- Setting permissions on home folder ----"
+echo -e "\n---- Estableciendo permisos en la carpeta home ----"
 sudo chown -R $OE_USER:$OE_USER $OE_HOME/*
 
-echo -e "* Create server config file"
+echo -e "* Crear archivo de configuracion del servidor"
 
 
 sudo touch /etc/${OE_CONFIG}.conf
-echo -e "* Creating server config file"
+echo -e "* Creando archivo de configuracion del servidor"
 sudo su root -c "printf '[options] \n; This is the password that allows database operations:\n' >> /etc/${OE_CONFIG}.conf"
 if [ $GENERATE_RANDOM_PASSWORD = "True" ]; then
-    echo -e "* Generating random admin password"
+    echo -e "* Generando contrasena de administrador aleatoria"
     OE_SUPERADMIN=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
 fi
 sudo su root -c "printf 'admin_passwd = ${OE_SUPERADMIN}\n' >> /etc/${OE_CONFIG}.conf"
@@ -171,7 +170,7 @@ fi
 sudo chown $OE_USER:$OE_USER /etc/${OE_CONFIG}.conf
 sudo chmod 640 /etc/${OE_CONFIG}.conf
 
-echo -e "* Create startup file"
+echo -e "* Crear archivo de inicio"
 sudo su root -c "echo '#!/bin/sh' >> $OE_HOME_EXT/start.sh"
 sudo su root -c "echo 'sudo -u $OE_USER $OE_HOME_EXT/odoo-bin --config=/etc/${OE_CONFIG}.conf' >> $OE_HOME_EXT/start.sh"
 sudo chmod 755 $OE_HOME_EXT/start.sh
@@ -180,7 +179,7 @@ sudo chmod 755 $OE_HOME_EXT/start.sh
 # Adding ODOO as a deamon (initscript)
 #--------------------------------------------------
 
-echo -e "* Create init file"
+echo -e "* Crear archivo init"
 cat <<EOF > ~/$OE_CONFIG
 #!/bin/sh
 ### BEGIN INIT INFO
@@ -247,19 +246,19 @@ esac
 exit 0
 EOF
 
-echo -e "* Security Init File"
+echo -e "* Archivo init de seguridad"
 sudo mv ~/$OE_CONFIG /etc/init.d/$OE_CONFIG
 sudo chmod 755 /etc/init.d/$OE_CONFIG
 sudo chown root: /etc/init.d/$OE_CONFIG
 
-echo -e "* Start ODOO on Startup"
+echo -e "* Iniciar ODOO al arrancar"
 sudo update-rc.d $OE_CONFIG defaults
 
 #--------------------------------------------------
 # Install Nginx if needed
 #--------------------------------------------------
 if [ $INSTALL_NGINX = "True" ]; then
-  echo -e "\n---- Installing and setting up Nginx ----"
+  echo -e "\n---- Instalando y configurando Nginx ----"
   sudo apt install nginx -y
   cat <<EOF > ~/odoo
   server {
@@ -339,21 +338,21 @@ EOF
   sudo rm /etc/nginx/sites-enabled/default
   sudo service nginx reload
   sudo su root -c "printf 'proxy_mode = True\n' >> /etc/${OE_CONFIG}.conf"
-  echo "Done! The Nginx server is up and running. Configuration can be found at /etc/nginx/sites-available/odoo"
+  echo "¡Hecho! El servidor Nginx está en ejecución. La configuración se encuentra en /etc/nginx/sites-available/odoo"
 else
-  echo "Nginx isn't installed due to choice of the user!"
+  echo "Nginx no se instaló por elección del usuario!"
 fi
-echo -e "* Starting Odoo Service"
+echo -e "* Iniciando el servicio Odoo"
 sudo su root -c "/etc/init.d/$OE_CONFIG start"
 echo "-----------------------------------------------------------"
-echo "Done! The Odoo server is up and running. Specifications:"
-echo "Port: $OE_PORT"
-echo "User service: $OE_USER"
-echo "User PostgreSQL: $OE_USER"
-echo "Code location: $OE_USER"
-echo "Addons folder: $OE_USER/$OE_CONFIG/addons/"
-echo "Password superadmin (database): $OE_SUPERADMIN"
-echo "Start Odoo service: sudo service $OE_CONFIG start"
-echo "Stop Odoo service: sudo service $OE_CONFIG stop"
-echo "Restart Odoo service: sudo service $OE_CONFIG restart"
+echo "¡Hecho! El servidor Odoo está en marcha. Especificaciones:"
+echo "Puerto: $OE_PORT"
+echo "Usuario del servicio: $OE_USER"
+echo "Usuario PostgreSQL: $OE_USER"
+echo "Ubicacion del codigo: $OE_USER"
+echo "Carpeta de addons: $OE_USER/$OE_CONFIG/addons/"
+echo "Contrasena del superadministrador (base de datos): $OE_SUPERADMIN"
+echo "Inicio del servicio Odoo: sudo service $OE_CONFIG start"
+echo "Detener servicio Odoo: sudo service $OE_CONFIG stop"
+echo "Reiniciar servicio Odoo: sudo service $OE_CONFIG restart"
 echo "-----------------------------------------------------------"
